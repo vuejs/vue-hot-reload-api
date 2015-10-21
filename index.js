@@ -1,18 +1,22 @@
 var Vue // late bind
 var map = Object.create(null)
 var shimmed = false
+var isBrowserify = false
 
 /**
  * Determine compatibility and apply patch.
  *
  * @param {Function} vue
+ * @param {Boolean} browserify
  */
 
-exports.install = function (vue) {
+exports.install = function (vue, browserify) {
   if (shimmed) return
   shimmed = true
 
   Vue = vue
+  isBrowserify = browserify
+
   exports.compatible = !!Vue.internalDirectives
   if (!exports.compatible) {
     console.warn(
@@ -24,7 +28,7 @@ exports.install = function (vue) {
 
   // patch view directive
   patchView(Vue.internalDirectives.component)
-  console.log('[HMR] vue component hot reload shim applied.')
+  console.log('[HMR] Vue component hot reload shim applied.')
   // shim router-view if present
   var routerView = Vue.elementDirective('router-view')
   if (routerView) {
@@ -101,6 +105,7 @@ function removeComponent (Component, view) {
 
 exports.createRecord = function (id, options) {
   if (typeof options.el !== 'string' && typeof options.data !== 'object') {
+    console.log('[HMR] Hot component detected: ' + format(id))
     var add = function () {
       map[id].instances.push(this)
     }
@@ -134,7 +139,17 @@ exports.update = function (id, newOptions, newTemplate) {
   // force full-reload if an instance of the component is active but is not
   // managed by a view
   if (!record || (record.instances.length && !record.views.length)) {
-    throw new Error('Root or manually-mounted instance modified. Full reload is required.')
+    console.log('[HMR] Root or manually-mounted instance modified. Full reload may be required.')
+    if (!isBrowserify) {
+      window.location.reload()
+    } else {
+      // browserify-hmr somehow sends incomplete bundle if we reload here
+      return
+    }
+  }
+  if (!isBrowserify) {
+    // browserify-hmr already logs this
+    console.log('[HMR] Updating component: ' + format(id))
   }
   var Component = record.Component
   // update constructor
@@ -180,4 +195,8 @@ function updateView (view) {
   // re-eanble transitions
   view.vm._isCompiled = true
   view.hotUpdating = false
+}
+
+function format (id) {
+  return id.match(/[^\/]+\.vue$/)[0]
 }
