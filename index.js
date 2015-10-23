@@ -48,11 +48,11 @@ function patchView (View) {
   View.unbuild = function (defer) {
     if (!this.hotUpdating) {
       var prevComponent = this.childVM && this.childVM.constructor
-      removeComponent(prevComponent, this)
+      removeView(prevComponent, this)
       // defer = true means we are transitioning to a new
       // Component. Register this new component to the list.
       if (defer) {
-        addComponent(this.Component, this)
+        addView(this.Component, this)
       }
     }
     // call original
@@ -67,7 +67,7 @@ function patchView (View) {
  * @param {Directive} view - view directive instance
  */
 
-function addComponent (Component, view) {
+function addView (Component, view) {
   var id = Component && Component.options.hotID
   if (id) {
     if (!map[id]) {
@@ -88,7 +88,7 @@ function addComponent (Component, view) {
  * @param {Directive} view - view directive instance
  */
 
-function removeComponent (Component, view) {
+function removeView (Component, view) {
   var id = Component && Component.options.hotID
   if (id) {
     map[id].views.$remove(view)
@@ -104,26 +104,54 @@ function removeComponent (Component, view) {
  */
 
 exports.createRecord = function (id, options) {
+  var Component = typeof options === 'function'
+    ? options
+    : Vue.extend(options)
+  options = Component.options
   if (typeof options.el !== 'string' && typeof options.data !== 'object') {
     console.log('[HMR] Hot component detected: ' + format(id))
-    var add = function () {
-      map[id].instances.push(this)
-    }
-    var remove = function () {
-      map[id].instances.$remove(this)
-    }
-    options.created = options.created
-      ? [options.created, add]
-      : add
-    options.beforeDestroy = options.beforeDestroy
-      ? [options.beforeDestroy, remove]
-      : remove
+    makeOptionsHot(id, options)
     map[id] = {
-      Component: Vue.extend(options),
+      Component: Component,
       views: [],
       instances: []
     }
   }
+}
+
+/**
+ * Make a Component options object hot.
+ *
+ * @param {String} id
+ * @param {Object} options
+ */
+
+function makeOptionsHot (id, options) {
+  options.hotID = id
+  injectHook(options, 'created', function () {
+    map[id].instances.push(this)
+  })
+  injectHook(options, 'beforeDestroy', function () {
+    map[id].instances.$remove(this)
+  })
+}
+
+/**
+ * Inject a hook to a hot reloadable component so that
+ * we can keep track of it.
+ *
+ * @param {Object} options
+ * @param {String} name
+ * @param {Function} hook
+ */
+
+function injectHook (options, name, hook) {
+  var existing = options[name]
+  options[name] = existing
+    ? Array.isArray(existing)
+      ? existing.concat(hook)
+      : [existing, hook]
+    : [hook]
 }
 
 /**
@@ -154,32 +182,39 @@ exports.update = function (id, newOptions, newTemplate) {
   var Component = record.Component
   // update constructor
   if (newOptions) {
-    Component.options = Vue.util.mergeOptions(Vue.options, newOptions)
+    // in case the user exports a constructor
+    Component = record.Component = typeof newOptions === 'function'
+      ? newOptions
+      : Vue.extend(newOptions)
+    makeOptionsHot(id, Component.options)
   }
   if (newTemplate) {
     Component.options.template = newTemplate
   }
   // handle recursive lookup
   if (Component.options.name) {
-    console.log(Component.options)
     Component.options.components[Component.options.name] = Component
   }
   // reset constructor cached linker
   Component.linker = null
   // reload all views
-  record.views.forEach(updateView)
+  record.views.forEach(function (view) {
+    updateView(view, Component)
+  })
 }
 
 /**
  * Update a component view instance
  *
  * @param {Directive} view
+ * @param {Function} Component
  */
 
-function updateView (view) {
+function updateView (view, Component) {
   if (!view._bound) {
     return
   }
+  view.Component = Component
   view.hotUpdating = true
   // disable transitions
   view.vm._isCompiled = false
