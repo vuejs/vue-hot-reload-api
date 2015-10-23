@@ -109,7 +109,6 @@ exports.createRecord = function (id, options) {
     : Vue.extend(options)
   options = Component.options
   if (typeof options.el !== 'string' && typeof options.data !== 'object') {
-    console.log('[HMR] Hot component detected: ' + format(id))
     makeOptionsHot(id, options)
     map[id] = {
       Component: Component,
