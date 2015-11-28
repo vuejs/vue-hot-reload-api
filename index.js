@@ -104,14 +104,13 @@ function removeView (Component, view) {
  */
 
 exports.createRecord = function (id, options) {
-  var Component = typeof options === 'function'
-    ? options
-    : Vue.extend(options)
-  options = Component.options
+  if (typeof options === 'function') {
+    options = options.options
+  }
   if (typeof options.el !== 'string' && typeof options.data !== 'object') {
     makeOptionsHot(id, options)
     map[id] = {
-      Component: Component,
+      Component: null,
       views: [],
       instances: []
     }
@@ -128,7 +127,11 @@ exports.createRecord = function (id, options) {
 function makeOptionsHot (id, options) {
   options.hotID = id
   injectHook(options, 'created', function () {
-    map[id].instances.push(this)
+    var record = map[id]
+    if (!record.Component) {
+      record.Component = this.constructor
+    }
+    record.instances.push(this)
   })
   injectHook(options, 'beforeDestroy', function () {
     map[id].instances.$remove(this)
