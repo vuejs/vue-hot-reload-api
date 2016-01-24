@@ -221,17 +221,74 @@ function updateView (view, Component) {
   // disable transitions
   view.vm._isCompiled = false
   // save state
-  var state = view.childVM.$data
+  var state = extractState(view.childVM)
   // remount, make sure to disable keep-alive
   var keepAlive = view.keepAlive
   view.keepAlive = false
   view.mountComponent()
   view.keepAlive = keepAlive
   // restore state
-  view.childVM.$data = state
+  restoreState(view.childVM, state, true)
   // re-eanble transitions
   view.vm._isCompiled = true
   view.hotUpdating = false
+}
+
+/**
+ * Extract state from a Vue instance.
+ *
+ * @param {Vue} vm
+ * @return {Object}
+ */
+
+function extractState (vm) {
+  return {
+    cid: vm.constructor.cid,
+    data: vm.$data,
+    children: vm.$children.map(extractState)
+  }
+}
+
+/**
+ * Restore state to a reloaded Vue instance.
+ *
+ * @param {Vue} vm
+ * @param {Object} state
+ */
+
+function restoreState (vm, state, isRoot) {
+  var oldAsyncConfig
+  if (isRoot) {
+    var s = Date.now()
+    // set Vue into sync mode during state rehydration
+    oldAsyncConfig = Vue.config.async
+    Vue.config.async = false
+  }
+  // actual restore
+  if (isRoot || !vm._props) {
+    vm.$data = state.data
+  } else {
+    Object.keys(state.data).forEach(function (key) {
+      if (!vm._props[key]) {
+        // for non-root, only restore non-props fields
+        vm.$data[key] = state.data[key]
+      }
+    })
+  }
+  // verify child consistency
+  var hasSameChildren = vm.$children.every(function (c, i) {
+    return state.children[i] && state.children[i].cid === c.constructor.cid
+  })
+  if (hasSameChildren) {
+    // rehydrate children
+    vm.$children.forEach(function (c, i) {
+      restoreState(c, state.children[i])
+    })
+  }
+  if (isRoot) {
+    Vue.config.async = oldAsyncConfig
+    console.log(Date.now() - s)
+  }
 }
 
 function format (id) {
