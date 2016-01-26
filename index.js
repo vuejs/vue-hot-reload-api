@@ -259,7 +259,6 @@ function extractState (vm) {
 function restoreState (vm, state, isRoot) {
   var oldAsyncConfig
   if (isRoot) {
-    var s = Date.now()
     // set Vue into sync mode during state rehydration
     oldAsyncConfig = Vue.config.async
     Vue.config.async = false
@@ -287,7 +286,6 @@ function restoreState (vm, state, isRoot) {
   }
   if (isRoot) {
     Vue.config.async = oldAsyncConfig
-    console.log(Date.now() - s)
   }
 }
 
