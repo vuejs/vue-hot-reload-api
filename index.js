@@ -203,6 +203,10 @@ exports.update = function (id, newOptions, newTemplate) {
   record.views.forEach(function (view) {
     updateView(view, Component)
   })
+  // flush devtools
+  if (window.__VUE_DEVTOOLS_GLOBAL_HOOK__) {
+    window.__VUE_DEVTOOLS_GLOBAL_HOOK__.emit('flush')
+  }
 }
 
 /**
