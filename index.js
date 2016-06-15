@@ -96,8 +96,14 @@ exports.rerender = tryWrap(function (id, fns) {
   record.instances.slice().forEach(function (instance) {
     instance.$options.render = fns.render
     instance.$options.staticRenderFns = fns.staticRenderFns
-    instance._staticTrees = null // reset static trees
+    instance._staticTrees = [] // reset static trees
     instance.$forceUpdate()
+    // force update on direct children for potential slot content update
+    instance.$children.forEach(function (child) {
+      if (Object.keys(child.$slots).length > 0) {
+        child.$forceUpdate()
+      }
+    })
   })
 })
 
