@@ -1,6 +1,6 @@
 # vue-hot-reload-api
 
-> Note: vue-hot-reload-api@2.x only works with vue@2.x
+> Note: `vue-hot-reload-api@2.x` only works with `vue@2.x`
 
 Hot reload API for Vue components. This is what [vue-loader](https://github.com/vuejs/vue-loader) and [vueify](https://github.com/vuejs/vueify) use under the hood.
 
