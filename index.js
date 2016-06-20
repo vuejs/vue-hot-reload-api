@@ -21,8 +21,8 @@ exports.install = function (vue, browserify) {
 }
 
 /**
- * Create a record for a hot module, which keeps track of its construcotr,
- * instnaces and views (component directives or router-views).
+ * Create a record for a hot module, which keeps track of its constructor,
+ * instances and views (component directives or router-views).
  *
  * @param {String} id
  * @param {Object} options
