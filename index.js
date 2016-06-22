@@ -294,5 +294,6 @@ function restoreState (vm, state, isRoot) {
 }
 
 function format (id) {
-  return id.match(/[^\/]+\.vue$/)[0]
+  var match = id.match(/[^\/]+\.vue$/)
+  return match ? match[0] : id
 }
