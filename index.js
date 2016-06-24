@@ -21,23 +21,23 @@ exports.install = function (vue, browserify) {
 }
 
 /**
- * Create a record for a hot module, which keeps track of its constructor,
- * instances and views (component directives or router-views).
+ * Create a record for a hot module, which keeps track of its constructor
+ * and instances
  *
  * @param {String} id
  * @param {Object} options
  */
 
 exports.createRecord = function (id, options) {
+  var Ctor = null
   if (typeof options === 'function') {
-    options = options.options
+    Ctor = options
+    options = Ctor.options
   }
-  if (typeof options.el !== 'string' && typeof options.data !== 'object') {
-    makeOptionsHot(id, options)
-    map[id] = {
-      Ctor: null,
-      instances: []
-    }
+  makeOptionsHot(id, options)
+  map[id] = {
+    Ctor: Vue.extend(options),
+    instances: []
   }
 }
 
@@ -50,11 +50,7 @@ exports.createRecord = function (id, options) {
 
 function makeOptionsHot (id, options) {
   injectHook(options, 'init', function () {
-    var record = map[id]
-    if (!record.Ctor) {
-      record.Ctor = this.constructor
-    }
-    record.instances.push(this)
+    map[id].instances.push(this)
   })
   injectHook(options, 'beforeDestroy', function () {
     var instances = map[id].instances
@@ -110,6 +106,7 @@ exports.rerender = tryWrap(function (id, fns) {
 exports.reload = tryWrap(function (id, options) {
   makeOptionsHot(id, options)
   var record = map[id]
+  record.Ctor.extendOptions = options
   var newCtor = Vue.extend(options)
   record.Ctor.options = newCtor.options
   record.Ctor.cid = newCtor.cid
