@@ -110,7 +110,10 @@ exports.reload = tryWrap(function (id, options) {
   var newCtor = Vue.extend(options)
   record.Ctor.options = newCtor.options
   record.Ctor.cid = newCtor.cid
-  newCtor.release()
+  if (newCtor.release) {
+    // temporary global mixin strategy used in < 2.0.0-alpha.6
+    newCtor.release()
+  }
   record.instances.slice().forEach(function (instance) {
     if (instance.$parent) {
       instance.$parent.$forceUpdate()
