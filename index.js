@@ -92,7 +92,6 @@ function tryWrap (fn) {
 }
 
 exports.rerender = tryWrap(function (id, fns) {
-  debugger
   var record = map[id]
   record.Ctor.options.render = fns.render
   record.Ctor.options.staticRenderFns = fns.staticRenderFns
