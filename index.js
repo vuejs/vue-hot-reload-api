@@ -2,6 +2,7 @@ var Vue // late bind
 var map = window.__VUE_HOT_MAP__ = Object.create(null)
 var installed = false
 var isBrowserify = false
+var initHookName = 'beforeCreate'
 
 exports.install = function (vue, browserify) {
   if (installed) return
@@ -9,6 +10,11 @@ exports.install = function (vue, browserify) {
 
   Vue = vue
   isBrowserify = browserify
+
+  // compat with < 2.0.0-alpha.7
+  if (Vue.config._lifecycleHooks.indexOf('init') > -1) {
+    initHookName = 'init'
+  }
 
   exports.compatible = Number(Vue.version.split('.')[0]) >= 2
   if (!exports.compatible) {
@@ -49,7 +55,7 @@ exports.createRecord = function (id, options) {
  */
 
 function makeOptionsHot (id, options) {
-  injectHook(options, 'init', function () {
+  injectHook(options, initHookName, function () {
     map[id].instances.push(this)
   })
   injectHook(options, 'beforeDestroy', function () {
@@ -86,6 +92,7 @@ function tryWrap (fn) {
 }
 
 exports.rerender = tryWrap(function (id, fns) {
+  debugger
   var record = map[id]
   record.Ctor.options.render = fns.render
   record.Ctor.options.staticRenderFns = fns.staticRenderFns
