@@ -288,6 +288,7 @@ function restoreState (vm, state, isRoot) {
       restoreState(c, state.children[i])
     })
   }
+  vm.$options._context._callHook('hotreload')
   if (isRoot) {
     Vue.config.async = oldAsyncConfig
   }
