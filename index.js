@@ -100,12 +100,6 @@ exports.rerender = tryWrap(function (id, fns) {
     instance.$options.staticRenderFns = fns.staticRenderFns
     instance._staticTrees = [] // reset static trees
     instance.$forceUpdate()
-    // force update on direct children for potential slot content update
-    instance.$children.forEach(function (child) {
-      if (Object.keys(child.$slots).length > 0) {
-        child.$forceUpdate()
-      }
-    })
   })
 })
 
