@@ -115,8 +115,8 @@ exports.reload = tryWrap(function (id, options) {
     newCtor.release()
   }
   record.instances.slice().forEach(function (instance) {
-    if (instance.$parent) {
-      instance.$parent.$forceUpdate()
+    if (instance.$vnode && instance.$vnode.context) {
+      instance.$vnode.context.$forceUpdate()
     } else {
       console.warn('Root or manually mounted instance modified. Full reload required.')
     }
