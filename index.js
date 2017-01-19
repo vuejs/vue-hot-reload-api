@@ -104,6 +104,9 @@ exports.rerender = tryWrap(function (id, fns) {
 })
 
 exports.reload = tryWrap(function (id, options) {
+  if (typeof options === 'function') {
+    options = options.options
+  }
   makeOptionsHot(id, options)
   var record = map[id]
   record.Ctor.extendOptions = options
