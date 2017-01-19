@@ -25,6 +25,7 @@ if (module.hot) {
   // make the API aware of the Vue that you are using.
   // also checks compatibility.
   api.install(Vue)
+  module.hot.accept()
 
   // compatibility can be checked via api.compatible after installation
   if (!api.compatible) {
