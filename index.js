@@ -91,13 +91,16 @@ function tryWrap (fn) {
   }
 }
 
-exports.rerender = tryWrap(function (id, fns) {
+exports.rerender = tryWrap(function (id, options) {
   var record = map[id]
-  record.Ctor.options.render = fns.render
-  record.Ctor.options.staticRenderFns = fns.staticRenderFns
+  if (typeof options === 'function') {
+    options = options.options
+  }
+  record.Ctor.options.render = options.render
+  record.Ctor.options.staticRenderFns = options.staticRenderFns
   record.instances.slice().forEach(function (instance) {
-    instance.$options.render = fns.render
-    instance.$options.staticRenderFns = fns.staticRenderFns
+    instance.$options.render = options.render
+    instance.$options.staticRenderFns = options.staticRenderFns
     instance._staticTrees = [] // reset static trees
     instance.$forceUpdate()
   })
