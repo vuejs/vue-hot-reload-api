@@ -1,6 +1,6 @@
 {
   "name": "vue-hot-reload-api",
-  "version": "2.0.7",
+  "version": "2.0.8",
   "description": "hot reload api for *.vue components",
   "main": "index.js",
   "scripts": {
