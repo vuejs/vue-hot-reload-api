@@ -30,6 +30,9 @@ if (module.hot) {
     throw new Error('vue-hot-reload-api与当前Vue的版本不兼容')
   }
 
+  // 此模块接受热重载
+  module.hot.accept()
+
   if (!module.hot.data) {
     // 为了将每一个组件中的选项变得可以热加载，
     // 你需要用一个不重复的id创建一次记录，
