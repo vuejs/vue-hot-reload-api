@@ -1,4 +1,5 @@
 var Vue // late bind
+var version
 var map = window.__VUE_HOT_MAP__ = Object.create(null)
 var installed = false
 var isBrowserify = false
@@ -9,6 +10,7 @@ exports.install = function (vue, browserify) {
   installed = true
 
   Vue = vue
+  version = Vue.version.split('.').map(Number)
   isBrowserify = browserify
 
   // compat with < 2.0.0-alpha.7
@@ -16,7 +18,7 @@ exports.install = function (vue, browserify) {
     initHookName = 'init'
   }
 
-  exports.compatible = Number(Vue.version.split('.')[0]) >= 2
+  exports.compatible = version[0] >= 2
   if (!exports.compatible) {
     console.warn(
       '[HMR] You are using a version of vue-hot-reload-api that is ' +
@@ -112,7 +114,10 @@ exports.reload = tryWrap(function (id, options) {
   }
   makeOptionsHot(id, options)
   var record = map[id]
-  record.Ctor.extendOptions = options
+  if (version[1] < 2) {
+    // preserve pre 2.2 behavior for global mixin handling
+    record.Ctor.extendOptions = options
+  }
   var newCtor = record.Ctor.super.extend(options)
   record.Ctor.options = newCtor.options
   record.Ctor.cid = newCtor.cid
