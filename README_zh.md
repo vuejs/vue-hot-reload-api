@@ -17,7 +17,7 @@ const myComponentOptions = {
 }
 
 // 检测 Webpack 的 HMR API
-// https://webpack.github.io/docs/hot-module-replacement.html
+// https://doc.webpack-china.org/guides/hot-module-replacement/
 if (module.hot) {
   const api = require('vue-hot-reload-api')
   const Vue = require('vue')
