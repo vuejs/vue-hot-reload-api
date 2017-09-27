@@ -4,6 +4,18 @@ var map = window.__VUE_HOT_MAP__ = Object.create(null)
 var installed = false
 var isBrowserify = false
 var initHookName = 'beforeCreate'
+var LIFECYCLE_HOOKS = [
+  'beforeCreate',
+  'created',
+  'beforeMount',
+  'mounted',
+  'beforeUpdate',
+  'updated',
+  'beforeDestroy',
+  'destroyed',
+  'activated',
+  'deactivated'
+]
 
 exports.install = function (vue, browserify) {
   if (installed) return
@@ -15,7 +27,7 @@ exports.install = function (vue, browserify) {
 
   // compat with < 2.0.0-alpha.7
   if (Vue.config._lifecycleHooks.indexOf('init') > -1) {
-    initHookName = 'init'
+    LIFECYCLE_HOOKS[0] = initHookName = 'init'
   }
 
   exports.compatible = version[0] >= 2
@@ -43,6 +55,15 @@ exports.createRecord = function (id, options) {
     options = Ctor.options
   }
   makeOptionsHot(id, options)
+
+  if (options.mixins && Object.keys(options.mixins).some(function (hook) {
+    return LIFECYCLE_HOOKS.indexOf(hook) == -1
+  })) {
+    map[id] = {
+      instances: []
+    }
+    return
+  }
   map[id] = {
     Ctor: Vue.extend(options),
     instances: []
@@ -104,8 +125,12 @@ exports.rerender = tryWrap(function (id, options) {
   if (typeof options === 'function') {
     options = options.options
   }
-  record.Ctor.options.render = options.render
-  record.Ctor.options.staticRenderFns = options.staticRenderFns
+  if (!record.Ctor) {
+    record.Ctor = Vue.extend(options)
+  } else {
+    record.Ctor.options.render = options.render
+    record.Ctor.options.staticRenderFns = options.staticRenderFns
+  }
   record.instances.slice().forEach(function (instance) {
     instance.$options.render = options.render
     instance.$options.staticRenderFns = options.staticRenderFns
@@ -121,6 +146,19 @@ exports.reload = tryWrap(function (id, options) {
       options = options.options
     }
     makeOptionsHot(id, options)
+    if (!record.Ctor) {
+      record.Ctor = Vue.extend(options)
+      if (version[1] < 2) {
+        // preserve pre 2.2 behavior for global mixin handling
+        record.Ctor.extendOptions = options
+      }
+      if (record.Ctor.release) {
+        // temporary global mixin strategy used in < 2.0.0-alpha.6
+        record.Ctor.release()
+      }
+      return
+    }
+
     if (version[1] < 2) {
       // preserve pre 2.2 behavior for global mixin handling
       record.Ctor.extendOptions = options
