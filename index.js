@@ -44,7 +44,8 @@ exports.createRecord = function (id, options) {
   }
   makeOptionsHot(id, options)
   map[id] = {
-    Ctor: Vue.extend(options),
+    Ctor: Ctor,
+    options: options,
     instances: []
   }
 }
@@ -58,7 +59,11 @@ exports.createRecord = function (id, options) {
 
 function makeOptionsHot (id, options) {
   injectHook(options, initHookName, function () {
-    map[id].instances.push(this)
+    var record = map[id]
+    if (!record.Ctor) {
+      record.Ctor = this.constructor
+    }
+    record.instances.push(this)
   })
   injectHook(options, 'beforeDestroy', function () {
     var instances = map[id].instances
@@ -104,14 +109,19 @@ exports.rerender = tryWrap(function (id, options) {
   if (typeof options === 'function') {
     options = options.options
   }
-  record.Ctor.options.render = options.render
-  record.Ctor.options.staticRenderFns = options.staticRenderFns
-  record.instances.slice().forEach(function (instance) {
-    instance.$options.render = options.render
-    instance.$options.staticRenderFns = options.staticRenderFns
-    instance._staticTrees = [] // reset static trees
-    instance.$forceUpdate()
-  })
+  if (record.Ctor) {
+    record.Ctor.options.render = options.render
+    record.Ctor.options.staticRenderFns = options.staticRenderFns
+    record.instances.slice().forEach(function (instance) {
+      instance.$options.render = options.render
+      instance.$options.staticRenderFns = options.staticRenderFns
+      instance._staticTrees = [] // reset static trees
+      instance.$forceUpdate()
+    })
+  } else {
+    record.options.render = options.render
+    record.options.staticRenderFns = options.staticRenderFns
+  }
 })
 
 exports.reload = tryWrap(function (id, options) {
@@ -121,17 +131,28 @@ exports.reload = tryWrap(function (id, options) {
       options = options.options
     }
     makeOptionsHot(id, options)
-    if (version[1] < 2) {
-      // preserve pre 2.2 behavior for global mixin handling
-      record.Ctor.extendOptions = options
-    }
-    var newCtor = record.Ctor.super.extend(options)
-    record.Ctor.options = newCtor.options
-    record.Ctor.cid = newCtor.cid
-    record.Ctor.prototype = newCtor.prototype
-    if (newCtor.release) {
-      // temporary global mixin strategy used in < 2.0.0-alpha.6
-      newCtor.release()
+    if (record.Ctor) {
+      if (version[1] < 2) {
+        // preserve pre 2.2 behavior for global mixin handling
+        record.Ctor.extendOptions = options
+      }
+      var newCtor = record.Ctor.super.extend(options)
+      record.Ctor.options = newCtor.options
+      record.Ctor.cid = newCtor.cid
+      record.Ctor.prototype = newCtor.prototype
+      if (newCtor.release) {
+        // temporary global mixin strategy used in < 2.0.0-alpha.6
+        newCtor.release()
+      }
+    } else {
+      for (var key in record.options) {
+        if (!(key in options)) {
+          delete record.options[key]
+        }
+      }
+      for (var key in options) {
+        record.options[key] = options[key]
+      }
     }
   }
   record.instances.slice().forEach(function (instance) {
