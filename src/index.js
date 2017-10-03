@@ -1,11 +1,11 @@
-var Vue // late bind
-var version
-var map = window.__VUE_HOT_MAP__ = Object.create(null)
-var installed = false
-var isBrowserify = false
-var initHookName = 'beforeCreate'
+let Vue // late bind
+let version
+const map = (window.__VUE_HOT_MAP__ = Object.create(null))
+let installed = false
+let isBrowserify = false
+let initHookName = 'beforeCreate'
 
-exports.install = function (vue, browserify) {
+exports.install = (vue, browserify) => {
   if (installed) return
   installed = true
 
@@ -22,7 +22,7 @@ exports.install = function (vue, browserify) {
   if (!exports.compatible) {
     console.warn(
       '[HMR] You are using a version of vue-hot-reload-api that is ' +
-      'only compatible with Vue.js core ^2.0.0.'
+        'only compatible with Vue.js core ^2.0.0.'
     )
     return
   }
@@ -36,16 +36,16 @@ exports.install = function (vue, browserify) {
  * @param {Object} options
  */
 
-exports.createRecord = function (id, options) {
-  var Ctor = null
+exports.createRecord = (id, options) => {
+  let Ctor = null
   if (typeof options === 'function') {
     Ctor = options
     options = Ctor.options
   }
   makeOptionsHot(id, options)
   map[id] = {
-    Ctor: Ctor,
-    options: options,
+    Ctor,
+    options,
     instances: []
   }
 }
@@ -57,16 +57,16 @@ exports.createRecord = function (id, options) {
  * @param {Object} options
  */
 
-function makeOptionsHot (id, options) {
-  injectHook(options, initHookName, function () {
-    var record = map[id]
+function makeOptionsHot(id, options) {
+  injectHook(options, initHookName, function() {
+    const record = map[id]
     if (!record.Ctor) {
       record.Ctor = this.constructor
     }
     record.instances.push(this)
   })
-  injectHook(options, 'beforeDestroy', function () {
-    var instances = map[id].instances
+  injectHook(options, 'beforeDestroy', function() {
+    const instances = map[id].instances
     instances.splice(instances.indexOf(this), 1)
   })
 }
@@ -80,28 +80,30 @@ function makeOptionsHot (id, options) {
  * @param {Function} hook
  */
 
-function injectHook (options, name, hook) {
-  var existing = options[name]
+function injectHook(options, name, hook) {
+  const existing = options[name]
   options[name] = existing
-    ? Array.isArray(existing)
-      ? existing.concat(hook)
-      : [existing, hook]
+    ? Array.isArray(existing) ? existing.concat(hook) : [existing, hook]
     : [hook]
 }
 
-function tryWrap (fn) {
-  return function (id, arg) {
-    try { fn(id, arg) } catch (e) {
+function tryWrap(fn) {
+  return (id, arg) => {
+    try {
+      fn(id, arg)
+    } catch (e) {
       console.error(e)
-      console.warn('Something went wrong during Vue component hot-reload. Full reload required.')
+      console.warn(
+        'Something went wrong during Vue component hot-reload. Full reload required.'
+      )
     }
   }
 }
 
-exports.rerender = tryWrap(function (id, options) {
-  var record = map[id]
+exports.rerender = tryWrap((id, options) => {
+  const record = map[id]
   if (!options) {
-    record.instances.slice().forEach(function (instance) {
+    record.instances.slice().forEach(instance => {
       instance.$forceUpdate()
     })
     return
@@ -112,7 +114,7 @@ exports.rerender = tryWrap(function (id, options) {
   if (record.Ctor) {
     record.Ctor.options.render = options.render
     record.Ctor.options.staticRenderFns = options.staticRenderFns
-    record.instances.slice().forEach(function (instance) {
+    record.instances.slice().forEach(instance => {
       instance.$options.render = options.render
       instance.$options.staticRenderFns = options.staticRenderFns
       instance._staticTrees = [] // reset static trees
@@ -124,8 +126,8 @@ exports.rerender = tryWrap(function (id, options) {
   }
 })
 
-exports.reload = tryWrap(function (id, options) {
-  var record = map[id]
+exports.reload = tryWrap((id, options) => {
+  const record = map[id]
   if (options) {
     if (typeof options === 'function') {
       options = options.options
@@ -136,7 +138,7 @@ exports.reload = tryWrap(function (id, options) {
         // preserve pre 2.2 behavior for global mixin handling
         record.Ctor.extendOptions = options
       }
-      var newCtor = record.Ctor.super.extend(options)
+      const newCtor = record.Ctor.super.extend(options)
       record.Ctor.options = newCtor.options
       record.Ctor.cid = newCtor.cid
       record.Ctor.prototype = newCtor.prototype
@@ -145,21 +147,23 @@ exports.reload = tryWrap(function (id, options) {
         newCtor.release()
       }
     } else {
-      for (var key in record.options) {
+      for (const key in record.options) {
         if (!(key in options)) {
           delete record.options[key]
         }
       }
-      for (var key in options) {
+      for (const key in options) {
         record.options[key] = options[key]
       }
     }
   }
-  record.instances.slice().forEach(function (instance) {
+  record.instances.slice().forEach(instance => {
     if (instance.$vnode && instance.$vnode.context) {
       instance.$vnode.context.$forceUpdate()
     } else {
-      console.warn('Root or manually mounted instance modified. Full reload required.')
+      console.warn(
+        'Root or manually mounted instance modified. Full reload required.'
+      )
     }
   })
 })

@@ -2,9 +2,11 @@
   "name": "vue-hot-reload-api",
   "version": "2.1.0",
   "description": "hot reload api for *.vue components",
-  "main": "index.js",
+  "main": "dist/index.js",
   "scripts": {
-    "test": "echo \"Error: no test specified\" && exit 1"
+    "build": "buble src -o dist",
+    "test": "jest",
+    "prepublishOnly": "npm run test && npm run build"
   },
   "repository": {
     "type": "git",
@@ -20,5 +22,10 @@
   "bugs": {
     "url": "https://github.com/vuejs/vue-hot-reload-api/issues"
   },
-  "homepage": "https://github.com/vuejs/vue-hot-reload-api#readme"
+  "homepage": "https://github.com/vuejs/vue-hot-reload-api#readme",
+  "devDependencies": {
+    "buble": "^0.16.0",
+    "jest": "^21.2.1",
+    "vue": "^2.4.4"
+  }
 }
