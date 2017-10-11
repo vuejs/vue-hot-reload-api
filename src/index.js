@@ -58,17 +58,28 @@ exports.createRecord = (id, options) => {
  */
 
 function makeOptionsHot(id, options) {
-  injectHook(options, initHookName, function() {
-    const record = map[id]
-    if (!record.Ctor) {
-      record.Ctor = this.constructor
+  if (options.functional) {
+    const render = options.render
+    options.render = (h, ctx) => {
+      const instances = map[id].instances
+      if (instances.indexOf(ctx.parent) < 0) {
+        instances.push(ctx.parent)
+      }
+      return render(h, ctx)
     }
-    record.instances.push(this)
-  })
-  injectHook(options, 'beforeDestroy', function() {
-    const instances = map[id].instances
-    instances.splice(instances.indexOf(this), 1)
-  })
+  } else {
+    injectHook(options, initHookName, function() {
+      const record = map[id]
+      if (!record.Ctor) {
+        record.Ctor = this.constructor
+      }
+      record.instances.push(this)
+    })
+    injectHook(options, 'beforeDestroy', function() {
+      const instances = map[id].instances
+      instances.splice(instances.indexOf(this), 1)
+    })
+  }
 }
 
 /**
@@ -100,6 +111,17 @@ function tryWrap(fn) {
   }
 }
 
+function updateOptions (oldOptions, newOptions) {
+  for (const key in oldOptions) {
+    if (!(key in newOptions)) {
+      delete oldOptions[key]
+    }
+  }
+  for (const key in newOptions) {
+    oldOptions[key] = newOptions[key]
+  }
+}
+
 exports.rerender = tryWrap((id, options) => {
   const record = map[id]
   if (!options) {
@@ -117,12 +139,45 @@ exports.rerender = tryWrap((id, options) => {
     record.instances.slice().forEach(instance => {
       instance.$options.render = options.render
       instance.$options.staticRenderFns = options.staticRenderFns
-      instance._staticTrees = [] // reset static trees
+      // reset static trees
+      if (instance._staticTrees) {
+        // pre 2.5 staticTrees are cached per-instance
+        instance._staticTrees = []
+      } else {
+        // post 2.5 staticTrees are cached on shared options
+        record.Ctor.options._staticTrees = []
+      }
       instance.$forceUpdate()
     })
   } else {
+    // functional or no instance created yet
     record.options.render = options.render
     record.options.staticRenderFns = options.staticRenderFns
+
+    // handle functional component re-render
+    if (record.options.functional) {
+      // rerender with full options
+      if (Object.keys(options).length > 2) {
+        updateOptions(record.options, options)
+      } else {
+        // template-only rerender.
+        // need to inject the style injection code for CSS modules
+        // to work properly.
+        const injectStyles = record.options._injectStyles
+        if (injectStyles) {
+          const render = options.render
+          record.options.render = (h, ctx) => {
+            injectStyles.call(ctx)
+            return render(h, ctx)
+          }
+        }
+      }
+      record.options._Ctor = null
+      record.options._staticTrees = []
+      record.instances.slice().forEach(instance => {
+        instance.$forceUpdate()
+      })
+    }
   }
 })
 
@@ -147,14 +202,7 @@ exports.reload = tryWrap((id, options) => {
         newCtor.release()
       }
     } else {
-      for (const key in record.options) {
-        if (!(key in options)) {
-          delete record.options[key]
-        }
-      }
-      for (const key in options) {
-        record.options[key] = options[key]
-      }
+      updateOptions(record.options, options)
     }
   }
   record.instances.slice().forEach(instance => {

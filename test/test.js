@@ -131,3 +131,66 @@ test(id3, done => {
     done()
   })
 })
+
+const id4 = 'rerender: functional component'
+test(id4, done => {
+  const app = prepare(id4, {
+    functional: true,
+    props: {
+      msg: { default: 'hello' }
+    },
+    render (h, ctx) {
+      return h('div', ctx.props.msg)
+    }
+  })
+
+  app.$mount()
+  expect(app.$el.textContent).toBe('hello')
+
+  api.rerender(id4, {
+    functional: true,
+    props: {
+      msg: { default: 'bye' }
+    },
+    render (h, ctx) {
+      return h('div', ctx.props.msg)
+    }
+  })
+
+  Vue.nextTick(() => {
+    expect(app.$el.textContent).toBe('bye')
+    done()
+  })
+})
+
+const id5 = 'rerender: functional component with only template updates'
+test(id5, done => {
+  const _injectStyles = jest.fn(function () {
+    this.$style = {
+      red: 'red'
+    }
+  })
+  const app = prepare(id5, {
+    _injectStyles,
+    functional: true,
+    render (h, ctx) {
+      _injectStyles.call(ctx)
+      return h('div', ctx.$style.red)
+    }
+  })
+
+  app.$mount()
+  expect(_injectStyles).toHaveBeenCalledTimes(1)
+  expect(app.$el.textContent).toBe('red')
+
+  api.rerender(id5, {
+    render (h, ctx) {
+      return h('div', ctx.$style.red + ' updated')
+    }
+  })
+
+  Vue.nextTick(() => {
+    expect(app.$el.textContent).toBe('red updated')
+    done()
+  })
+})
