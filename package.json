@@ -1,9 +1,11 @@
 {
   "name": "vue-hot-reload-api",
-  "version": "2.1.1",
+  "version": "2.2.0",
   "description": "hot reload api for *.vue components",
   "main": "dist/index.js",
-  "files": ["dist"],
+  "files": [
+    "dist"
+  ],
   "scripts": {
     "build": "buble src -o dist",
     "test": "jest",
