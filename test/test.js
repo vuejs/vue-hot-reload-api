@@ -194,3 +194,17 @@ test(id5, done => {
     done()
   })
 })
+
+const id6 = 'rerender: mounted with functional root component'
+test(id6, done => {
+  const fComp = {
+    functional: true,
+    render: h => h('div', 'foo')
+  }
+
+  api.createRecord(id6, fComp)
+
+  const app = new Vue(fComp).$mount()
+  expect(app.$el.textContent).toBe('foo')
+  done()
+})
