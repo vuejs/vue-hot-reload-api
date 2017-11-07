@@ -62,7 +62,7 @@ function makeOptionsHot(id, options) {
     const render = options.render
     options.render = (h, ctx) => {
       const instances = map[id].instances
-      if (instances.indexOf(ctx.parent) < 0) {
+      if (ctx && instances.indexOf(ctx.parent) < 0) {
         instances.push(ctx.parent)
       }
       return render(h, ctx)
