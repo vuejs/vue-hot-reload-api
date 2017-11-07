@@ -140,11 +140,14 @@ exports.rerender = tryWrap((id, options) => {
       instance.$options.render = options.render
       instance.$options.staticRenderFns = options.staticRenderFns
       // reset static trees
+      // pre 2.5, all static trees are cahced together on the instance
+      // post 2.5.4: only v-once trees. Pure static trees are cached on the
+      // staticRenderFns array (replaced above)
       if (instance._staticTrees) {
-        // pre 2.5 staticTrees are cached per-instance
         instance._staticTrees = []
-      } else {
-        // post 2.5 staticTrees are cached on shared options
+      }
+      // 2.5.0~2.5.1
+      if (record.Ctor.options._staticTree) {
         record.Ctor.options._staticTrees = []
       }
       instance.$forceUpdate()
