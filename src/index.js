@@ -181,7 +181,10 @@ exports.rerender = tryWrap((id, options) => {
         }
       }
       record.options._Ctor = null
-      record.options._staticTrees = []
+      // 2.5.3
+      if (Array.isArray(record.options.cached)) {
+        record.options.cached = []
+      }
       record.instances.slice().forEach(instance => {
         instance.$forceUpdate()
       })
