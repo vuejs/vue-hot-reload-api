@@ -37,6 +37,8 @@ exports.install = (vue, browserify) => {
  */
 
 exports.createRecord = (id, options) => {
+  if(map[id]) return
+  
   let Ctor = null
   if (typeof options === 'function') {
     Ctor = options
@@ -48,6 +50,16 @@ exports.createRecord = (id, options) => {
     options,
     instances: []
   }
+}
+
+/**
+ * Check if module is recorded
+ *
+ * @param {String} id
+ */
+
+exports.isRecorded = (id) => {
+  return typeof map[id] !== 'undefined'
 }
 
 /**
