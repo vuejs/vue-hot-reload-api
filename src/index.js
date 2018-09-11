@@ -1,5 +1,8 @@
 let Vue // late bind
 let version
+if (!window) { 
+  var window = {}; 
+}
 const map = (window.__VUE_HOT_MAP__ = Object.create(null))
 let installed = false
 let isBrowserify = false
