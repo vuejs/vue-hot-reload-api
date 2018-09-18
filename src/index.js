@@ -1,6 +1,6 @@
 let Vue // late bind
 let version
-const map = (window.__VUE_HOT_MAP__ = Object.create(null))
+const map = ((typeof window !== 'undefined' && window || global).__VUE_HOT_MAP__ = Object.create(null))
 let installed = false
 let isBrowserify = false
 let initHookName = 'beforeCreate'
@@ -38,7 +38,7 @@ exports.install = (vue, browserify) => {
 
 exports.createRecord = (id, options) => {
   if(map[id]) return
-  
+
   let Ctor = null
   if (typeof options === 'function') {
     Ctor = options
