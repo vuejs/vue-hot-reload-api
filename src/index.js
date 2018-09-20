@@ -1,6 +1,9 @@
 let Vue // late bind
 let version
-const map = ((typeof window !== 'undefined' && window || global).__VUE_HOT_MAP__ = Object.create(null))
+const map = Object.create(null)
+if (typeof window !== 'undefined') {
+  window.__VUE_HOT_MAP__ = map
+}
 let installed = false
 let isBrowserify = false
 let initHookName = 'beforeCreate'
