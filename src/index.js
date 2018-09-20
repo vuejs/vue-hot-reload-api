@@ -152,7 +152,7 @@ exports.rerender = tryWrap((id, options) => {
       instance.$options.render = options.render
       instance.$options.staticRenderFns = options.staticRenderFns
       // reset static trees
-      // pre 2.5, all static trees are cahced together on the instance
+      // pre 2.5, all static trees are cached together on the instance
       if (instance._staticTrees) {
         instance._staticTrees = []
       }
