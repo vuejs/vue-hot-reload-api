@@ -167,10 +167,16 @@ exports.rerender = tryWrap((id, options) => {
       if (Array.isArray(instance.$options.cached)) {
         instance.$options.cached = []
       }
+
       // post 2.5.4: v-once trees are cached on instance._staticTrees.
       // Pure static trees are cached on the staticRenderFns array
       // (both already reset above)
+
+      // 2.6: temporarily mark rendered scoped slots as unstable so that
+      // child components can be forced to update
+      const restore = patchScopedSlots(instance)
       instance.$forceUpdate()
+      instance.$nextTick(restore)
     })
   } else {
     // functional or no instance created yet
@@ -241,3 +247,17 @@ exports.reload = tryWrap((id, options) => {
     }
   })
 })
+
+// 2.6 optimizes template-compiled scoped slots and skips updates if child
+// only uses scoped slots. We need to patch the scoped slots resolving helper
+// to temporarily mark all scoped slots as unstable in order to force child
+// updates.
+function patchScopedSlots (instance) {
+  if (!instance._u) return
+  // https://github.com/vuejs/vue/blob/dev/src/core/instance/render-helpers/resolve-scoped-slots.js
+  const original = instance._u
+  instance._u = slots => original(slots, true)
+  return () => {
+    instance._u = original
+  }
+}
