@@ -256,7 +256,7 @@ function patchScopedSlots (instance) {
   if (!instance._u) return
   // https://github.com/vuejs/vue/blob/dev/src/core/instance/render-helpers/resolve-scoped-slots.js
   const original = instance._u
-  instance._u = slots => original(slots, true)
+  instance._u = slots => original(slots, null, true)
   return () => {
     instance._u = original
   }
