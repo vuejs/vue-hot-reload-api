@@ -227,7 +227,7 @@ exports.reload = tryWrap((id, options) => {
       }
       const newCtor = record.Ctor.super.extend(options)
       // prevent record.options._Ctor from being overwritten accidentally
-      newCtor.options._Ctor = record.options._Ctor;
+      newCtor.options._Ctor = record.options._Ctor
       record.Ctor.options = newCtor.options
       record.Ctor.cid = newCtor.cid
       record.Ctor.prototype = newCtor.prototype
