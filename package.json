@@ -28,7 +28,7 @@
   "homepage": "https://github.com/vuejs/vue-hot-reload-api#readme",
   "devDependencies": {
     "buble": "^0.19.6",
-    "jest": "^23.6.0",
+    "jest": "^24.9.0",
     "vue": "^2.5.21"
   }
 }
