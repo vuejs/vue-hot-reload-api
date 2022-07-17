@@ -7,6 +7,7 @@ if (typeof window !== 'undefined') {
 let installed = false
 let isBrowserify = false
 let initHookName = 'beforeCreate'
+const instancesMap = new WeakMap()
 
 exports.install = (vue, browserify) => {
   if (installed) return
@@ -79,6 +80,8 @@ function makeOptionsHot(id, options) {
       const instances = map[id].instances
       if (ctx && instances.indexOf(ctx.parent) < 0) {
         instances.push(ctx.parent)
+        const ids = instancesMap.get(ctx.parent)
+        ids && ids.push(id)
       }
       return render(h, ctx)
     }
@@ -89,10 +92,17 @@ function makeOptionsHot(id, options) {
         record.Ctor = this.constructor
       }
       record.instances.push(this)
+      if (!instancesMap.has(this)) {
+        instancesMap.set(this, [])
+      }
     })
     injectHook(options, 'beforeDestroy', function() {
       const instances = map[id].instances
       instances.splice(instances.indexOf(this), 1)
+      instancesMap.get(this).forEach(functionalId =>{
+        map[functionalId].instances.splice(instances.indexOf(this), 1)
+      })
+      instancesMap.delete(this)
     })
   }
 }
